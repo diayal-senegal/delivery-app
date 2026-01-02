@@ -80,8 +80,8 @@ class AuthManager {
     
     try {
       await authApi.logout();
-    } catch (error: any) {
-      console.log('Logout API skipped');
+    } catch (error) {
+      console.log('Logout skipped');
     }
     
     await tokenStore.remove();

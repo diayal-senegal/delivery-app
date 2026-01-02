@@ -58,9 +58,11 @@ export interface Delivery {
   failureComment?: string;
   
   requestedPickupAt?: string;
+  assignedAt?: string;
   acceptedAt?: string;
   rejectedAt?: string;
   pickedUpAt?: string;
+  enRouteAt?: string;
   arrivedAt?: string;
   deliveredAt?: string;
   failedAt?: string;

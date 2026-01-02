@@ -260,34 +260,41 @@ export default function DeliveryDetailScreen({ route, navigation }: any) {
         {deliveryPhoto ? (
           <View>
             <Image source={{ uri: deliveryPhoto }} style={styles.deliveryPhoto} />
-            <View style={styles.photoActions}>
-              <TouchableOpacity 
-                style={styles.retakeButton}
-                onPress={takeDeliveryPhoto}
-              >
-                <Text style={styles.retakeButtonText}>Reprendre</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.deleteButton}
-                onPress={() => setDeliveryPhoto(null)}
-              >
-                <Text style={styles.deleteButtonText}>Supprimer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.validateButton}
-                onPress={() => Alert.alert('Photo validée', 'La photo a été enregistrée avec succès !')}
-              >
-                <Text style={styles.validateButtonText}>✓ OK</Text>
-              </TouchableOpacity>
-            </View>
+            {!['DELIVERED', 'FAILED', 'CANCELED', 'REJECTED'].includes(delivery.status) && (
+              <View style={styles.photoActions}>
+                <TouchableOpacity 
+                  style={styles.retakeButton}
+                  onPress={takeDeliveryPhoto}
+                >
+                  <Text style={styles.retakeButtonText}>Reprendre</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={() => setDeliveryPhoto(null)}
+                >
+                  <Text style={styles.deleteButtonText}>Supprimer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.validateButton}
+                  onPress={() => Alert.alert('Photo validée', 'La photo a été enregistrée avec succès !')}
+                >
+                  <Text style={styles.validateButtonText}>✓ OK</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         ) : (
-          <TouchableOpacity 
-            style={styles.photoButton}
-            onPress={takeDeliveryPhoto}
-          >
-            <Text style={styles.photoButtonText}>📷 Prendre une photo</Text>
-          </TouchableOpacity>
+          !['DELIVERED', 'FAILED', 'CANCELED', 'REJECTED'].includes(delivery.status) && (
+            <TouchableOpacity 
+              style={styles.photoButton}
+              onPress={takeDeliveryPhoto}
+            >
+              <Text style={styles.photoButtonText}>📷 Prendre une photo</Text>
+            </TouchableOpacity>
+          )
+        )}
+        {['DELIVERED', 'FAILED', 'CANCELED', 'REJECTED'].includes(delivery.status) && !deliveryPhoto && (
+          <Text style={styles.noPhotoText}>Aucune photo disponible</Text>
         )}
       </View>
 
@@ -318,12 +325,14 @@ export default function DeliveryDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity 
-        style={styles.issueButton}
-        onPress={() => navigation.navigate('DeliveryIssue', { deliveryId })}
-      >
-        <Text style={styles.issueButtonText}>⚠️ Signaler un problème</Text>
-      </TouchableOpacity>
+      {!['DELIVERED', 'FAILED', 'CANCELED', 'REJECTED'].includes(delivery.status) && (
+        <TouchableOpacity 
+          style={styles.issueButton}
+          onPress={() => navigation.navigate('DeliveryIssue', { deliveryId })}
+        >
+          <Text style={styles.issueButtonText}>⚠️ Signaler un problème</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -546,5 +555,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: theme.fontSize.md,
     fontWeight: '700',
+  },
+  noPhotoText: {
+    textAlign: 'center',
+    color: theme.colors.textLight,
+    fontSize: theme.fontSize.sm,
+    fontStyle: 'italic',
+    paddingVertical: theme.spacing.lg,
   },
 });

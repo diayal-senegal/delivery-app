@@ -45,6 +45,10 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/courier/auth/logout');
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.log('Logout API error:', error);
+    }
   },
 };
