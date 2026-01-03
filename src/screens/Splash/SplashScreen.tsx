@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Image, StyleSheet, Text } from 'react-native';
 import { tokenStore } from '../../services/storage/token.store';
 import { authManager } from '../../services/auth/auth-manager.service';
 
@@ -10,12 +10,9 @@ export default function SplashScreen({ navigation }: any) {
 
   const checkAuth = async () => {
     try {
-      // IMPORTANT: Nettoyer les anciens tokens si l'URL a changé
-      // Cette vérification force une reconnexion après changement d'URL
       const token = await tokenStore.get();
       
       if (token) {
-        // Vérifier si le compte est valide avec la nouvelle URL
         try {
           const { valid } = await authManager.checkAccountStatus();
           
@@ -23,56 +20,72 @@ export default function SplashScreen({ navigation }: any) {
             if (valid) {
               navigation.replace('AppTabs');
             } else {
-              // Token invalide, nettoyer et aller au login
               tokenStore.remove();
               navigation.replace('AuthStack');
             }
-          }, 1500);
+          }, 2000);
         } catch (error) {
-          // Erreur de validation (probablement 401), nettoyer
           await tokenStore.remove();
           setTimeout(() => {
             navigation.replace('AuthStack');
-          }, 1500);
+          }, 2000);
         }
       } else {
         setTimeout(() => {
           navigation.replace('AuthStack');
-        }, 1500);
+        }, 2000);
       }
     } catch (error) {
-      // En cas d'erreur, nettoyer et aller au login
       await tokenStore.remove();
       setTimeout(() => {
         navigation.replace('AuthStack');
-      }, 1500);
+      }, 2000);
     }
   };
 
   return (
     <View style={styles.container}>
       <Image 
-        source={require('../../../assets/logo-diayal.png')} 
+        source={require('../../../assets/1.png')} 
         style={styles.logo}
         resizeMode="contain"
       />
-      <ActivityIndicator size="large" color="#e74c3c" style={styles.loader} />
+      
+      <View style={styles.brandContainer}>
+        <Text style={styles.brandName}>Diayal</Text>
+        <Text style={styles.brandTagline}>Livraison rapide et fiable</Text>
+      </View>
     </View>
   );
 }
 
+const ACCENT = '#059473';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F6F8F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 200,
+    width: 320,
     height: 200,
+    marginBottom: 30,
   },
-  loader: {
-    marginTop: 20,
+  brandContainer: {
+    alignItems: 'center',
+  },
+  brandName: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#0E1412',
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  brandTagline: {
+    fontSize: 15,
+    color: '#5C6B66',
+    fontWeight: '600',
   },
 });

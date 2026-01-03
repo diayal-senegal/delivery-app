@@ -117,13 +117,11 @@ export default function LoginScreen({ navigation }: any) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={require('../../../assets/logo-diayal.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={require('../../../assets/1.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
           <View style={styles.pill}>
             <Text style={styles.pillText}>Espace Coursier</Text>
@@ -216,22 +214,12 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
 
-  logoWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 6,
-    marginBottom: 12,
+  logo: {
+    width: 490,
+    height: 300,
+    marginBottom: -50,
   },
 
-  logo: {
-    width: 84,
-    height: 84,
-  },
 
   pill: {
     backgroundColor: 'rgba(5, 148, 115, 0.10)',
@@ -240,7 +228,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
-    marginTop: 4,
+    marginTop: -50,
   },
 
   pillText: {
