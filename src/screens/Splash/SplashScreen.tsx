@@ -25,14 +25,12 @@ export default function SplashScreen({ navigation }: any) {
             } else {
               // Token invalide, nettoyer et aller au login
               tokenStore.remove();
-              tokenStore.removeRefreshToken();
               navigation.replace('AuthStack');
             }
           }, 1500);
         } catch (error) {
           // Erreur de validation (probablement 401), nettoyer
           await tokenStore.remove();
-          await tokenStore.removeRefreshToken();
           setTimeout(() => {
             navigation.replace('AuthStack');
           }, 1500);
@@ -45,7 +43,6 @@ export default function SplashScreen({ navigation }: any) {
     } catch (error) {
       // En cas d'erreur, nettoyer et aller au login
       await tokenStore.remove();
-      await tokenStore.removeRefreshToken();
       setTimeout(() => {
         navigation.replace('AuthStack');
       }, 1500);

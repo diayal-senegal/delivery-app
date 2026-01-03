@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+
 import { authApi } from '../../services/api/auth.api';
 import { authManager } from '../../services/auth/auth-manager.service';
 import { validatePhone, validatePassword, sanitizePhone } from '../../utils/validation';
@@ -29,16 +40,13 @@ export default function LoginScreen({ navigation }: any) {
 
     const { allowed, remainingTime } = await rateLimiter.checkLoginAttempts();
     if (!allowed) {
-      Alert.alert(
-        'Compte temporairement bloqué',
-        `Trop de tentatives échouées. Réessayez dans ${remainingTime} secondes.`
-      );
+      Alert.alert('Compte temporairement bloqué', `Trop de tentatives échouées. Réessayez dans ${remainingTime} secondes.`);
       return;
     }
 
     setLoading(true);
+
     try {
-      // Essayer d'abord avec le numéro tel quel
       let response;
       try {
         response = await authApi.login({ phone, password });
@@ -51,7 +59,7 @@ export default function LoginScreen({ navigation }: any) {
           throw firstError;
         }
       }
-      
+
       const validation = await authManager.validateCourierAccess(response.courier);
       if (!validation.valid) {
         Alert.alert('Accès refusé', validation.reason || 'Accès non autorisé');
@@ -65,22 +73,30 @@ export default function LoginScreen({ navigation }: any) {
         response.expiresIn,
         response.courier
       );
+
       await rateLimiter.resetAttempts();
-      
       navigation.replace('AppTabs');
     } catch (error: any) {
       const result = await rateLimiter.recordFailedAttempt();
-      
+
+      // Vérifier si le compte nécessite une activation
+      if (error.response?.data?.requiresActivation) {
+        Alert.alert(
+          'Compte non activé',
+          'Votre compte n\'a pas encore été activé. Veuillez entrer le code OTP reçu par SMS.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Activer', onPress: () => navigation.navigate('Activation', { phone }) }
+          ]
+        );
+        setLoading(false);
+        return;
+      }
+
       if (result.locked) {
-        Alert.alert(
-          'Compte bloqué',
-          'Trop de tentatives échouées. Votre compte est temporairement bloqué pour 5 minutes.'
-        );
+        Alert.alert('Compte bloqué', 'Trop de tentatives échouées. Votre compte est temporairement bloqué pour 5 minutes.');
       } else if (result.remainingAttempts !== undefined) {
-        Alert.alert(
-          'Erreur de connexion',
-          `Identifiants incorrects. ${result.remainingAttempts} tentative(s) restante(s).`
-        );
+        Alert.alert('Erreur de connexion', `Identifiants incorrects. ${result.remainingAttempts} tentative(s) restante(s).`);
       } else {
         Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
       }
@@ -90,224 +106,269 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <Image 
-                source={require('../../../assets/logo-diayal.png')} 
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.title}>Diayal</Text>
-            <Text style={styles.subtitle}>Livraison Express</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require('../../../assets/logo-diayal.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
 
-          <View style={styles.formCard}>
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeText}>Bienvenue ! 👋</Text>
-              <Text style={styles.welcomeSubtext}>Connectez-vous pour commencer vos livraisons</Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>📱 Téléphone</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="+221 XX XXX XX XX"
-                placeholderTextColor="#999"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>🔒 Mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Entrez votre mot de passe"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={loading ? ['#999', '#666'] : ['#667eea', '#764ba2']}
-                style={styles.buttonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.buttonText}>
-                  {loading ? '⏳ Connexion...' : '🚀 Se connecter'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <View style={styles.divider} />
-              <Text style={styles.footerText}>Espace Coursier</Text>
-              <View style={styles.divider} />
-            </View>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>Espace Coursier</Text>
           </View>
-        </ScrollView>
-      </LinearGradient>
+
+          <Text style={styles.title}>Connexion</Text>
+          <Text style={styles.subtitle}>Accédez à vos livraisons et à votre activité.</Text>
+        </View>
+
+        {/* Card */}
+        <View style={styles.formCard}>
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeText}>Bienvenue 👋</Text>
+            <Text style={styles.welcomeSubtext}>Connectez-vous pour commencer vos livraisons</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>📱 Téléphone</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="+221 XX XXX XX XX"
+              placeholderTextColor="#87928E"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="telephoneNumber"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>🔒 Mot de passe</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Entrez votre mot de passe"
+              placeholderTextColor="#87928E"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Connexion...' : 'Se connecter'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <View style={styles.divider} />
+            <Text style={styles.footerText}>Diayal • Livraison</Text>
+            <View style={styles.divider} />
+          </View>
+        </View>
+
+        <Text style={styles.bottomHint}>
+          Astuce : utilisez un mot de passe sûr — on préfère la sécurité aux surprises.
+        </Text>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+const ACCENT = '#059473';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F6F8F7', // clair premium
   },
-  gradient: {
-    flex: 1,
-  },
+
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingTop: 54,
     paddingBottom: 40,
   },
-  logoContainer: {
+
+  header: {
     alignItems: 'center',
-    marginBottom: 40,
+    paddingBottom: 18,
   },
+
   logoWrapper: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 100,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
-    marginBottom: 20,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-  },
-  title: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: '#fff',
-    textAlign: 'center',
-    letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    marginTop: 8,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 28,
+    padding: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-  welcomeSection: {
-    marginBottom: 32,
-  },
-  welcomeText: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  welcomeSubtext: {
-    fontSize: 15,
-    color: '#666',
-    lineHeight: 22,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 2,
-    borderColor: '#e9ecef',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#1a1a1a',
-  },
-  button: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
     elevation: 6,
+    marginBottom: 12,
   },
-  buttonGradient: {
+
+  logo: {
+    width: 84,
+    height: 84,
+  },
+
+  pill: {
+    backgroundColor: 'rgba(5, 148, 115, 0.10)',
+    borderColor: 'rgba(5, 148, 115, 0.25)',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginTop: 4,
+  },
+
+  pillText: {
+    color: ACCENT,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  title: {
+    marginTop: 14,
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#0E1412',
+  },
+
+  subtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: '#5C6B66',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    lineHeight: 20,
+  },
+
+  formCard: {
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.06,
+    shadowRadius: 22,
+    elevation: 5,
+  },
+
+  welcomeSection: {
+    marginBottom: 18,
+  },
+
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#0E1412',
+    marginBottom: 6,
+  },
+
+  welcomeSubtext: {
+    fontSize: 13,
+    color: '#5C6B66',
+    lineHeight: 18,
+  },
+
+  inputContainer: {
+    marginBottom: 14,
+  },
+
+  label: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0E1412',
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.10)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#0E1412',
+  },
+
+  primaryButton: {
+    marginTop: 6,
+    backgroundColor: ACCENT,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: ACCENT,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 6,
   },
-  buttonDisabled: {
-    opacity: 0.7,
+
+  primaryButtonDisabled: {
+    backgroundColor: '#7FAEA2',
+    shadowOpacity: 0.08,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
+
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 18,
   },
+
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e9ecef',
+    backgroundColor: 'rgba(0,0,0,0.06)',
   },
+
   footerText: {
-    fontSize: 13,
-    color: '#999',
-    marginHorizontal: 12,
-    fontWeight: '600',
+    fontSize: 12,
+    color: '#87928E',
+    marginHorizontal: 10,
+    fontWeight: '700',
+  },
+
+  bottomHint: {
+    marginTop: 14,
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#87928E',
   },
 });
