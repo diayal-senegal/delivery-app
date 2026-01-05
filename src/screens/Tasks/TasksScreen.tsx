@@ -120,7 +120,7 @@ export default function TasksScreen({ navigation }: any) {
       </View>
 
       {item.cashOnDeliveryAmount && item.cashOnDeliveryAmount > 0 && (
-        <Text style={styles.cod}>💰 À encaisser: {item.cashOnDeliveryAmount} {item.feeCurrency}</Text>
+        <Text style={styles.cod}>💰 À encaisser: {item.cashOnDeliveryAmount} FCFA</Text>
       )}
     </TouchableOpacity>
   );

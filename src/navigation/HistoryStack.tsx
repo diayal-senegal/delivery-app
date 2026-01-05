@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HistoryScreen from '../screens/History/HistoryScreen';
-import DeliveryDetailScreen from '../screens/Tasks/DeliveryDetailScreen';
+import HistoryDeliveryDetailScreen from '../screens/History/HistoryDeliveryDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,8 +20,8 @@ export default function HistoryStack() {
         options={{ title: 'Historique' }}
       />
       <Stack.Screen 
-        name="DeliveryDetail" 
-        component={DeliveryDetailScreen}
+        name="HistoryDeliveryDetail" 
+        component={HistoryDeliveryDetailScreen}
         options={{ title: 'Détail livraison' }}
       />
     </Stack.Navigator>

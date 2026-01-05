@@ -219,7 +219,7 @@ export default function DeliveryDetailScreen({ route, navigation }: any) {
       {delivery.cashOnDeliveryAmount && delivery.cashOnDeliveryAmount > 0 && (
         <View style={[styles.card, styles.codCard]}>
           <Text style={styles.codLabel}>💰 Montant à encaisser</Text>
-          <Text style={styles.codAmount}>{delivery.cashOnDeliveryAmount} {delivery.feeCurrency}</Text>
+          <Text style={styles.codAmount}>{delivery.cashOnDeliveryAmount} FCFA</Text>
         </View>
       )}
 

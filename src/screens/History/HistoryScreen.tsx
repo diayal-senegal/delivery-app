@@ -58,7 +58,7 @@ export default function HistoryScreen({ navigation }: any) {
   const renderDelivery = ({ item }: { item: Delivery }) => (
     <TouchableOpacity 
       style={styles.card}
-      onPress={() => navigation.navigate('DeliveryDetail', { deliveryId: item.id })}
+      onPress={() => navigation.navigate('HistoryDeliveryDetail', { deliveryId: item.id })}
     >
       <View style={styles.header}>
         <Text style={styles.id}>#{item.id.slice(0, 8)}</Text>
@@ -133,7 +133,7 @@ export default function HistoryScreen({ navigation }: any) {
       
       {item.cashOnDeliveryAmount > 0 && (
         <View style={styles.footer}>
-          <Text style={styles.fee}>💰 {item.cashOnDeliveryAmount} {item.feeCurrency}</Text>
+          <Text style={styles.fee}>💰 {item.cashOnDeliveryAmount} FCFA</Text>
         </View>
       )}
     </TouchableOpacity>
